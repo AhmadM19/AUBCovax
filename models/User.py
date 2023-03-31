@@ -1,5 +1,46 @@
 from app import db, bcrypt, ma
-from models import UserType,getStringFromType
+from enum import Enum
+
+class UserType(Enum):
+    """This class represents the different types of users"""
+    Patient = 0
+    Staff = 1
+    Admin = 2
+    Invalid = 3
+
+def getStringFromType(type: UserType) -> str:
+    """Function to convert UserType to str for practical reasons
+
+    Args:
+        type (UserType): type to be converted
+
+    Returns:
+        str: string representation of type, or null if UserType.Invalid
+    """
+    if(type==UserType.Patient):
+        return "Patient"
+    if(type==UserType.Staff):
+        return "Staff"
+    if(type==UserType.Admin):
+        return "Admin"
+    
+def getTypeFromString(str: str)->UserType:
+    """Function to convert str to UserType for practical reasons
+
+    Args:
+        str (str): string to be converted to type
+
+    Returns:
+        UserType: userType corresponding to string, UserType.Invalid if type is invalid
+    """
+    if(str=="Patient"):
+        return UserType.Patient
+    if(str=="Staff"):
+        return UserType.Staff
+    if(str=="Admin"):
+        return UserType.Admin
+    
+    return UserType.Invalid
 
 class User(db.Model):
     """SQLalchemy model for users, corresponds to "user" table
@@ -10,7 +51,7 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     password = db.Column(db.String)
-    date_of_birth = db.Column(db.String) #save as something like "dd-mm-yyyy", no need to enforce in db
+    date_of_birth = db.Column(db.String) #save as something like "yyyy-mm-dd" (same as datetime.date.__str__()), no need to enforce in db
     id_card = db.Column(db.String,unique=True)
     phone_number = db.Column(db.String,unique=True)
     email = db.Column(db.String,unique=True)
@@ -25,7 +66,7 @@ class User(db.Model):
         Args:
             name (str): name
             password (str): password
-            date_of_birth (str): date of birth, format as "dd-mm-yyyy"
+            date_of_birth (str): date of birth, format as "yyyy-mm-dd",(same as datetime.date.__str__())
             id_card (str): id card number
             phone_number (str): phone number
             email (str): email

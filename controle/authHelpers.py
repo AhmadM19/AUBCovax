@@ -2,8 +2,7 @@ from flask import Request
 import jwt
 import datetime
 
-from models import UserType,getStringFromType
-from models.User import User
+from models.User import User,UserType,getStringFromType
 
 from config import SECRET_KEY
 
