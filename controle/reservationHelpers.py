@@ -17,7 +17,7 @@ def getSoonestFreeTimeSlot() -> int:
     Returns:
         int: timestamp of the earliest available vaccination timeSlot
     """
-    booked:list[Reservation] = Reservation.query.filter(Reservation.time >= (datetime.datetime.now()-datetime.timedelta(minutes=30)).timestamp()).all()
+    booked:list[Reservation] = Reservation.query.filter(Reservation.time >= datetime.datetime.now().timestamp()).all()
     booked.sort(key=lambda reservation : reservation.time)
 
     today = datetime.date.today()

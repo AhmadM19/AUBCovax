@@ -41,15 +41,13 @@ class Reservation(db.Model):
     __tablename__ = "reservation"
 
     reservation_id = db.Column(db.Integer, primary_key=True)
-    time = db.Column(db.Integer)  #as timestamp (a timestamp is the number of seconds since 1/1/1970 at 12:00 am GMT)
+    time = db.Column(db.Integer,unique=True)  #as timestamp (a timestamp is the number of seconds since 1/1/1970 at 12:00 am GMT)
     user_id = db.Column(db.Integer,db.ForeignKey("user.user_id"))
 
     reservation_state = db.Column(db.String) #this one is used to diffrentiate between "Waiting" and "Fullfilled" (Fullfilled also means has a certificate)
     
-    def __init__(self,date,slot,user_id) -> None:
-        super(Reservation,self).__init__(date=date,
-                                         slot=slot,
-                                         user_id=user_id)
+    def __init__(self,time) -> None:
+        super(Reservation,self).__init__(time=time)
         self.reservation_state = getStringFromState(ReservationState.Waiting) #always automatically set "Waiting"
 
 class ReservationSchema(ma.Schema):
@@ -59,5 +57,5 @@ class ReservationSchema(ma.Schema):
         fields = ("time","user_id","reservation_state")
         model = Reservation
 
-reservation_schema_schema = ReservationSchema()
+reservation_schema = ReservationSchema()
 reservation_schema_many = ReservationSchema(many=True)
