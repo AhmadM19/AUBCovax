@@ -20,7 +20,7 @@ def getStringFromState(state: ReservationState) -> str:
     if(state==ReservationState.Fullfilled):
         return "Fullfilled"
     
-def getTypeFromString(str: str)->ReservationState:
+def getStateFromString(str: str)->ReservationState:
     """Function to convert str to ReservationState for practical reasons
 
     Args:
@@ -41,8 +41,7 @@ class Reservation(db.Model):
     __tablename__ = "reservation"
 
     reservation_id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String)  #save as something like "yyyy-mm-dd", no need to enforce in db
-    slot = db.Column(db.Integer) #between 0 and 19, represents teh 20 possible time slots between 8:00am to 6:00pm
+    time = db.Column(db.Integer)  #as timestamp (a timestamp is the number of seconds since 1/1/1970 at 12:00 am GMT)
     user_id = db.Column(db.Integer,db.ForeignKey("user.user_id"))
 
     reservation_state = db.Column(db.String) #this one is used to diffrentiate between "Waiting" and "Fullfilled" (Fullfilled also means has a certificate)
@@ -57,7 +56,7 @@ class ReservationSchema(ma.Schema):
     """Marshmallow schema to dump Reservation data
     """
     class Meta:
-        fields = ("date","slot", "user_id","reservation_state")
+        fields = ("time","user_id","reservation_state")
         model = Reservation
 
 reservation_schema_schema = ReservationSchema()
