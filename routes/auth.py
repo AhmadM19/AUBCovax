@@ -1,15 +1,15 @@
 from flask import Blueprint,request
 
 from app import db,bcrypt
-from controle.authHelpers import create_token,authenticateAs
-from controle.reservationHelpers import getSoonestFreeTimeSlot,updateAllOutDatedStates
-from models.User import User,user_schema,UserType
+from controle.authHelpers import create_token
+from controle.reservationHelpers import getSoonestFreeTimeSlot
+from models.User import User,user_schema
 from models.Reservation import Reservation,reservation_schema
 
-auth = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@auth.route('/signup', methods=["POST"])
+@auth_bp.route('/signup', methods=["POST"])
 def create_user():
     """Creates a new user in the database and books a reservation at the earliest
     possible time for him
@@ -59,7 +59,7 @@ def create_user():
         "first_reservation":reservation_schema.dump(first_reservation)
     }
 
-@auth.route('/signin', methods=['POST'])
+@auth_bp.route('/signin', methods=['POST'])
 def get_token():
     """Generates a JWS token to identify the user with the requested credentials, and specifies the user type
 

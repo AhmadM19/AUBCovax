@@ -21,3 +21,11 @@ app.app_context().push()
 
 db = SQLAlchemy(app)
 
+from routes.auth import auth_bp
+app.register_blueprint(auth_bp)
+
+from routes.reservationRoutes import reservations_bp
+app.register_blueprint(reservations_bp)
+
+from routes.userRoutes import users_bp
+app.register_blueprint(users_bp)
