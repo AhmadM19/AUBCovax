@@ -10,3 +10,16 @@ population/country
 ```
 git clone https://github.com/your-username/AUBCovax.git
 cd AUBCovax
+
+2.Create the database instance:
+
+```
+python
+from app import db
+db.create_all()
+exit()
+
+3.Run the backend:
+
+```
+flask run
