@@ -2,7 +2,7 @@ from flask import Blueprint,request,jsonify
 
 from app import db
 from controle.authHelpers import authenticateAs
-from controle.reservationHelpers import getSoonestFreeTimeSlot,updateAllOutDatedStates
+from controle.reservationHelpers import getSoonestFreeTimeSlot,updateAllOutDatedStates,send_email
 from models.User import User,UserType
 from models.Reservation import Reservation, ReservationState,reservation_schema,reservation_schema_many,getStringFromState
 
@@ -49,7 +49,7 @@ def retrieve_reservations_by_id():
 
 @reservations_bp.route('/create', methods=["POST"])
 def create_new_reservation():
-    """create user reservation, only works if the logged in user is a staff member and if patient took dose one
+    """create second user reservation and confirms dose one, only works if the logged in user is a staff member
 
     Returns:
         Http response
@@ -78,5 +78,36 @@ def create_new_reservation():
             "second_reservation":reservation_schema.dump(second_reservation)
         }  
 
+@reservations_bp.route('/sendCertificates', methods=["POST"])
+def send_certificate():
+    """send vaccination certificate and confirms dose two, only works if the logged in user is a staff member
+    Returns:
+        Http response
+    """
+    updateAllOutDatedStates()#Confirms dose two, please always call when dealing with reservations to ensure all is up to date, confirms dose 1 
+    staff:User = authenticateAs(request,UserType.Staff)
+    
+    if staff is None:
+        return {'error':'Invalid token, or user does not have access to this route!'},403
+    
+    body = request.get_json()
+    if ("user_id" not in body):
+        return {'error':'Missing value!'},400
+    
+    user=User.query.filter(User.user_id==body["user_id"]).all()
+    sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).second()
 
+    if sencond_reservation.dose_number==2 and sencond_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
+        return {'error':'Dose Two is not taken!'},400
+    else:
+        certificate = {
+        'vaccine_name': "Pfizer",
+        'patient_name': user.name,
+        'patient_phone_number': user.phone_number,
+        'issued_by': 'AUB Covax'}
+
+        send_email("Vaccination Certificate",user.email,"Dear,"+ {user.name}+"This an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+{certificate})
+        return {
+            "success":certificate
+        }
 
