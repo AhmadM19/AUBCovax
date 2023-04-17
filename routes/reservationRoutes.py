@@ -4,7 +4,7 @@ from app import db
 from controle.authHelpers import authenticateAs
 from controle.reservationHelpers import getSoonestFreeTimeSlot,updateAllOutDatedStates
 from models.User import User,UserType
-from models.Reservation import Reservation,reservation_schema,reservation_schema_many
+from models.Reservation import Reservation, ReservationState,reservation_schema,reservation_schema_many,getStringFromState
 
 reservations_bp = Blueprint('reservations', __name__, url_prefix='/reservations')
 
@@ -46,4 +46,36 @@ def retrieve_reservations_by_id():
     reservations = Reservation.query.filter(Reservation.user_id==body["user_id"]).all()
     
     return jsonify(reservation_schema_many.dump(reservations))
+
+@reservations_bp.route('/create', methods=["POST"])
+def create_new_reservation():
+    """create user reservation, only works if the logged in user is a staff member and if patient took dose one
+
+    Returns:
+        Http response
+    """
+    updateAllOutDatedStates()#please always call when dealing with reservations to ensure all is up to date, confirms dose 1 
+    staff:User = authenticateAs(request,UserType.Staff)
+
+    if staff is None:
+        return {'error':'Invalid token, or user does not have access to this route!'},403
+    
+    body = request.get_json()
+    if ("user_id" not in body):
+        return {'error':'Missing value!'},400
+    
+    first_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).first()
+    if first_reservation.dose_number==1 and first_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
+        return {'error':'Dose one is not taken!'},400
+    
+    else:
+        second_reservation = Reservation(getSoonestFreeTimeSlot())
+        second_reservation.user_id = body["user_id"]
+        second_reservation.dose_number = 2
+        db.session.add(second_reservation)
+        db.session.commit()
+        return {
+            "second_reservation":reservation_schema.dump(second_reservation)
+        }  
+
 

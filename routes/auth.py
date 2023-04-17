@@ -45,6 +45,7 @@ def create_user():
         db.session.add(new_user)
         db.session.commit()
         first_reservation.user_id = new_user.user_id
+        first_reservation.dose_number = 1
         db.session.add(first_reservation)
         db.session.commit()
     except:
