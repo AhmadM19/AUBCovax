@@ -43,7 +43,7 @@ class Reservation(db.Model):
     reservation_id = db.Column(db.Integer, primary_key=True)
     time = db.Column(db.Integer,unique=True)  #as timestamp (a timestamp is the number of seconds since 1/1/1970 at 12:00 am GMT)
     user_id = db.Column(db.Integer,db.ForeignKey("user.user_id"))
-
+    dose_number=db.Column(db.Integer)
     reservation_state = db.Column(db.String) #this one is used to diffrentiate between "Waiting" and "Fullfilled" (Fullfilled also means has a certificate)
     
     def __init__(self,time) -> None:
@@ -54,7 +54,7 @@ class ReservationSchema(ma.Schema):
     """Marshmallow schema to dump Reservation data
     """
     class Meta:
-        fields = ("time","user_id","reservation_state")
+        fields = ("time","user_id","dose_number","reservation_state")
         model = Reservation
 
 reservation_schema = ReservationSchema()
