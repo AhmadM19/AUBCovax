@@ -27,7 +27,7 @@ def retrieve_all_users_data():
     Returns:
         Http response
     """
-    user:User = authenticateAs(UserType.Admin)
+    user:User = authenticateAs(request,UserType.Admin)
     if user is None:#Neither staff nor admin
         return {'error':'Invalid token, or user does not have access to this route!'},403
     
@@ -43,7 +43,7 @@ def retrieve_all_patient_data():
     Returns:
         Http response
     """
-    user:User = authenticateAs(UserType.Staff)
+    user:User = authenticateAs(request,UserType.Staff)
     if user is None:#Neither staff nor admin
         return {'error':'Invalid token, or user does not have access to this route!'},403
     

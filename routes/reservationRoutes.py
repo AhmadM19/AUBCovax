@@ -16,7 +16,7 @@ def retrieve_current_user_reservations():
         Http response
     """
     updateAllOutDatedStates()#please always call when dealing with reservations to ensure all is up to date
-    user:User = authenticateAs(UserType.Patient)
+    user:User = authenticateAs(request,UserType.Patient)
     if user is None:
         return {'error':'Invalid token, or user not a patient!'},403
     
@@ -33,7 +33,7 @@ def retrieve_reservations_by_id():
         Http response
     """
     updateAllOutDatedStates()#please always call when dealing with reservations to ensure all is up to date
-    user:User = authenticateAs(UserType.Staff)
+    user:User = authenticateAs(request,UserType.Staff)
     if user is None:
         user:User = authenticateAs(UserType.Admin)
     if user is None:#Neither staff nor admin
