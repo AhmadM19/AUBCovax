@@ -2,7 +2,7 @@ from flask import Blueprint,request
 
 from app import db,bcrypt
 from controle.authHelpers import create_token
-from controle.reservationHelpers import getSoonestFreeTimeSlot
+from controle.reservationHelpers import getSoonestFreeTimeSlot,send_email
 from models.User import User,user_schema
 from models.Reservation import Reservation,reservation_schema
 
@@ -54,7 +54,8 @@ def create_user():
             db.session.commit()
         return {'error':'User already exists, or failed to reserve!'},403
     
-    #TODO: send an email
+    send_email("Vaccination Process",new_user.email,"Dear,"+ {new_user.name}+"This an automatic email from AUBCOvaxto confirm your appointment for dose One")
+
     return {
         "user":user_schema.dump(new_user),
         "first_reservation":reservation_schema.dump(first_reservation)

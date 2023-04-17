@@ -1,5 +1,7 @@
 import datetime
 
+from flask_mail import Message
+from app import mail
 from models.Reservation import Reservation,ReservationState,getStringFromState
 
 
@@ -44,3 +46,8 @@ def getSoonestFreeTimeSlot() -> int:
                 currentSlot += datetime.timedelta(minutes=30)#next slot in time
                 reservation_iterator+=1#next reservation
             today +=datetime.timedelta(days=1)#next day
+
+def send_email(subject,receipents,body):
+    msg = Message(subject, sender='abcovax@gmail.com', recipients=receipents)
+    msg.body = body
+    mail.send(msg)
