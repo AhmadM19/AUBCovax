@@ -95,7 +95,7 @@ def send_certificate():
         return {'error':'Missing value!'},400
     
     user=User.query.filter(User.user_id==body["user_id"]).all()
-    sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).second()
+    sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).offset(1).limit(1).first()
 
     if sencond_reservation.dose_number==2 and sencond_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
         return {'error':'Dose Two is not taken!'},400

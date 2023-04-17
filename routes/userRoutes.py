@@ -1,7 +1,10 @@
-from flask import Blueprint,request,jsonify
+from flask import Blueprint,request,jsonify,Response
 
 from controle.authHelpers import authenticateAs
 from models.User import User,user_schema,user_schema_many,UserType,getStringFromType
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -51,3 +54,44 @@ def retrieve_all_patient_data():
     
     return jsonify(user_schema_many.dump(users))
 
+@users_bp.route('/downloadCertificate', methods=["GET"])
+def retrieve_user_certificate():
+    """Retrieves user certificate
+
+    Returns:
+        Http response
+    """
+    user:User = authenticateAs(request,UserType.Patient)
+    if user is None:#Neither patient nor staff nor admin
+        return {'error':'Invalid token, or user does not have access to this route!'},403
+    
+    # Create a list of data for the vaccine certificate
+    certificate_data = [
+        ['Vaccine Name:', "Pfizer"],
+        ['Patient Name:', user.name],
+        ['Issued By:', 'AUB Covax'],
+    ]
+
+    # Create a PDF document
+    doc = SimpleDocTemplate("vaccine_certificate.pdf", pagesize=landscape(letter))
+    elements = []
+
+    # Create a table to hold the certificate data
+    table = Table(certificate_data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(table)
+
+    # Build the PDF document and return it as a response
+    doc.build(elements)
+    with open("vaccine_certificate.pdf", "rb") as f:
+        pdf_data = f.read()
+    return Response(pdf_data, content_type='application/pdf')
