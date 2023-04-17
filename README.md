@@ -12,7 +12,7 @@ git clone https://github.com/your-username/AUBCovax.git
 cd AUBCovax
 ```
 
-2.Create the database instance:
+2.Open python shell and create the database instance:
 
 ```
 python
