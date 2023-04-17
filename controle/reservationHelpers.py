@@ -26,18 +26,21 @@ def getSoonestFreeTimeSlot() -> int:
     currentSlot = datetime.datetime.fromtimestamp(((datetime.datetime.now().timestamp()+1799)//1800)*1800)#complicated math that rounds to next occurende of 0 minutes or 30 minutes
 
     reservation_iterator = 0
-
-    while currentSlot <= latestToday:#check if a slot is available today
-        if booked[reservation_iterator].time!=currentSlot.timestamp():
-            return currentSlot.timestamp()
-        currentSlot += datetime.timedelta(minutes=30)#next slot in time
-        reservation_iterator+=1#next reservation
-
-    while True:#keeps checking in future days till it finds a slot
-        currentSlot = datetime.datetime(today.year,today.month,today.day,hour=8)# first time slot of the day at 8 am
-        for slot in range(0,20):
+    
+    if len(booked) == 0:
+        return currentSlot.timestamp()
+    else:
+        while currentSlot <= latestToday:#check if a slot is available today
             if booked[reservation_iterator].time!=currentSlot.timestamp():
                 return currentSlot.timestamp()
             currentSlot += datetime.timedelta(minutes=30)#next slot in time
             reservation_iterator+=1#next reservation
-        today +=datetime.timedelta(days=1)#next day
+
+        while True:#keeps checking in future days till it finds a slot
+            currentSlot = datetime.datetime(today.year,today.month,today.day,hour=8)# first time slot of the day at 8 am
+            for slot in range(0,20):
+                if booked[reservation_iterator].time!=currentSlot.timestamp():
+                    return currentSlot.timestamp()
+                currentSlot += datetime.timedelta(minutes=30)#next slot in time
+                reservation_iterator+=1#next reservation
+            today +=datetime.timedelta(days=1)#next day
