@@ -8,7 +8,7 @@ from models.Reservation import Reservation,reservation_schema,reservation_schema
 
 reservations_bp = Blueprint('reservations', __name__, url_prefix='/reservations')
 
-@reservations_bp.route('/getmine', methods=["GET"])
+@reservations_bp.route('/getMine', methods=["GET"])
 def retrieve_current_user_reservations():
     """Retrieves logged in users reservations/certificates, only works for patients
 
