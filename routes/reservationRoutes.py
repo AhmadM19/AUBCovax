@@ -78,7 +78,7 @@ def create_new_reservation():
             "second_reservation":reservation_schema.dump(second_reservation)
         }  
 
-@reservations_bp.route('/sendCertificates', methods=["POST"])
+@reservations_bp.route('/sendCertificate', methods=["POST"])
 def send_certificate():
     """send vaccination certificate and confirms dose two, only works if the logged in user is a staff member
     Returns:
