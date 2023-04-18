@@ -6,6 +6,8 @@ from controle.reservationHelpers import getSoonestFreeTimeSlot,updateAllOutDated
 from models.User import User,UserType
 from models.Reservation import Reservation, ReservationState,reservation_schema,reservation_schema_many,getStringFromState
 
+import datetime
+
 reservations_bp = Blueprint('reservations', __name__, url_prefix='/reservations')
 
 @reservations_bp.route('/getMine', methods=["GET"])
@@ -61,22 +63,37 @@ def create_new_reservation():
         return {'error':'Invalid token, or user does not have access to this route!'},403
     
     body = request.get_json()
-    if ("user_id" not in body):
+    if ("user_id" not in body)\
+        or ("time" not in body):
         return {'error':'Missing value!'},400
     
-    first_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).first()
-    if first_reservation.dose_number==1 and first_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
-        return {'error':'Dose one is not taken!'},400
+    user_id = body["user_id"]
+    time = body["time"]
+
+    reservations:list[Reservation] = Reservation.query.filter(Reservation.user_id==user_id).all()
+    if len(reservations)>1:
+        return {'error':'Dose already scheduled!'},400
+
+    reservation_day = datetime.date.fromtimestamp(time)
     
-    else:
-        second_reservation = Reservation(getSoonestFreeTimeSlot())
-        second_reservation.user_id = body["user_id"]
-        second_reservation.dose_number = 2
-        db.session.add(second_reservation)
-        db.session.commit()
-        return {
-            "second_reservation":reservation_schema.dump(second_reservation)
-        }  
+    if reservation_day < datetime.date.fromtimestamp(reservations[0].time)+datetime.timedelta(days=14):
+        return {'error':'Second dose need to be at least 2 weeks after first dose!'},400
+    
+    first_slot_that_day = datetime.datetime(reservation_day.year,reservation_day.month,reservation_day.day,hour=8)
+
+    if (time % 1800 != 0)\
+        or (time < first_slot_that_day.timestamp())\
+        or (time > first_slot_that_day.timestamp() + 34200):
+        return {'error':'Invalid Time Slot!'},400
+    
+    second_reservation = Reservation(time)
+    second_reservation.user_id = user_id
+    second_reservation.dose_number = 2
+    db.session.add(second_reservation)
+    db.session.commit()
+    return {
+        "second_reservation":reservation_schema.dump(second_reservation)
+    }  
 
 @reservations_bp.route('/sendCertificate', methods=["POST"])
 def send_certificate():
