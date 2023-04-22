@@ -91,9 +91,7 @@ def create_new_reservation():
     second_reservation.dose_number = 2
     db.session.add(second_reservation)
     db.session.commit()
-    return {
-        "second_reservation":reservation_schema.dump(second_reservation)
-    }  
+    return reservation_schema.dump(second_reservation)
 
 @reservations_bp.route('/sendCertificate', methods=["POST"])
 def send_certificate():
@@ -112,22 +110,28 @@ def send_certificate():
         return {'error':'Missing value!'},400
     
     user=User.query.filter(User.user_id==body["user_id"]).first()
+    if user is None:
+        return {'error':'Could not find user with user_id!'},400
     sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"],
                                                   Reservation.dose_number==2).first()
 
     if sencond_reservation is None or sencond_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
         return {'error':'Dose Two is not taken!'},400
-    else:
-        certificate = {
-        'vaccine_name': "Pfizer",
-        'patient_name': user.name,
-        'patient_phone_number': user.phone_number,
-        'Dose Number:':str(sencond_reservation.dose_number),
-        'Date:':str(datetime.date.fromtimestamp(sencond_reservation.time)),
-        'issued_by': 'AUB Covax'}
+    
+    certificate = "\n"+\
+    "vaccine_name : Pfizer\n"+\
+    "patient_name : "+ user.name+"\n"+\
+    "patient_phone_number : "+ user.phone_number+"\n"+\
+    "Dose Number : "+str(sencond_reservation.dose_number)+"\n"+\
+    "Date : "+str(datetime.date.fromtimestamp(sencond_reservation.time))+"\n"+\
+    "issued_by : AUB Covax"
 
-        send_email("Vaccination Certificate",user.email,"Dear,"+ {user.name}+"This an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+{certificate})
-        return {
-            "success":certificate
-        }
+    try:
+        send_email("Vaccination Certificate",user.email,"Dear,"+ user.name+"This an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+certificate)
+    except:
+        print("MAIL NOT SENT!!!!!!")
+        
+    return {
+        "success":certificate
+    }
 

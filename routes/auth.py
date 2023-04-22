@@ -22,7 +22,6 @@ def create_user():
         or ("password" not in body)\
         or ("date_of_birth" not in body)\
         or ("id_card" not in body)\
-        or ("date_of_birth" not in body)\
         or ("phone_number" not in body)\
         or ("email" not in body)\
         or ("address" not in body)\
@@ -48,14 +47,17 @@ def create_user():
         first_reservation.dose_number = 1
         db.session.add(first_reservation)
         db.session.commit()
+
     except:
         if new_user.user_id != None: #cleanup in case of failure
             db.session.delete(new_user)
             db.session.commit()
         return {'error':'User already exists, or failed to reserve!'},403
+    try:
+        send_email("Vaccination Process",new_user.email,"Dear,"+new_user.name+"This an automatic email from AUBCovax to confirm your appointment for dose One")
+    except:
+        print("EMAIL NOT SENT!!!!!!!!!!!!!!!")
     
-    send_email("Vaccination Process",new_user.email,"Dear,"+ {new_user.name}+"This an automatic email from AUBCovax to confirm your appointment for dose One")
-
     return {
         "user":user_schema.dump(new_user),
         "first_reservation":reservation_schema.dump(first_reservation)

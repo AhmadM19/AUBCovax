@@ -1,0 +1,310 @@
+Note that repo has DB prefilled with data:
+Credentials:
+
+- 000fryingpan000@gmail.com : password123
+- admin@mail.com : password123 #this user is an admin
+- staff@mail.com : password123 #this user is staff
+
+You can use this tool https://sqlitebrowser.org/dl/ to browse the sqlite database, I recommend
+using the portable version
+
+Some Notes on how this works:
+The Reservation serves as both reservation and certificate,
+a reservation with time < now is a certificate and has a reservation_state="Fullfilled"
+a reservation with time > now is a normal reservation and has reservation_state="Waiting"
+
+Everything in this file has been tested to be working
+
+route list:
+
+POST: /auth/signup #ALL
+POST: /auth/signin #ALL
+
+GET: /users/getMine #Patient
+GET: /users/getAll #Admin
+GET: /users/getPatients #Staff
+GET: /users/downloadCertificate/<int:reservationID> #Patient
+
+GET: /reservations/getMine #Patient
+GET: /reservations/getByUser #Staff
+POST: /reservations/create #Staff
+POST: /reservations/sendCertificate #Staff
+
+details:
+
+=>POST: /aut/signup
+-does:
+Creates a new user in the database and books a reservation at the earliest
+possible time for him
+-expects:
+{
+    "name":"Ibrahim El Hajj",
+    "password":"password123",
+    "date_of_birth":"10/4/2001", #date is not parsed so anything string can be stored
+    "id_card":"1233241423", #this field is unique, for obvious reasons
+    "phone_number":"+96100000000", #same as date, any string will do no restrictions, but note that it is unique
+    "email":"000fryingpan000@gmail.com", #this needs to be a valid email, though it is not verified on backend (and yes I own the email in example)
+    "address":"beirut/lebanon",
+    "condition":"likes mushrooms too much"
+}
+-returns:
++if arguments missing:
+{'error':'Missing values!'},400
++if email, id, or number is not unique:
+{'error':'User already exists, or failed to reserve!'},403
++if all ok:
+{
+    "first_reservation": {
+        "dose_number": 1,
+        "reservation_id": 1,
+        "reservation_state": "Waiting",
+        "time": 1682226000, #this value is a timestamp, no of seconds since 1970, should be easily convertable
+        "user_id": 1
+    },
+    "user": {
+        "address": "beirut/lebanon",
+        "condition": "likes mushrooms too much",
+        "date_of_birth": "10/4/2001",
+        "email": "000fryingpan000@gmail.com",
+        "id_card": "1233241423",
+        "name": "Ibrahim El Hajj",
+        "phone_number": "+96100000000",
+        "user_id": 1,
+        "user_type": "Patient"
+    }
+}
+$THIS SENDS AN EMAIL TOO
+
+=>POST: /aut/signin
+-does:
+Generates a JWS token to identify the user with the requested credentials, and specifies the user type
+the JWT is valid for 30 days
+-expects:
+{
+    "password":"password123",
+    "email":"000fryingpan000@gmail.com"
+}
+-returns:
++if arguments missing:
+{'error':'Missing values!'},400
++if user not found:
+{'error':'User not found!'},403
++if password wrong:
+{'error':'Incorrect password!'},403
++if all ok:
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3ODA3MDAsImlhdCI6MTY4MjE4ODcwMCwic3ViIjoxfQ.vczEy9ebzK2iMcWFzOS4TMFenUwykdW7D4GGDTHBywo",
+    "user_type": "Patient" #values can be "Patient" , "Staff" , "Admin"
+}
+
+
+=>GET: /users/getMine
+-does:
+Retrieves user data, can only be used by Patient
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if all ok:
+{
+    "address": "beirut/lebanon",
+    "condition": "likes mushrooms too much",
+    "date_of_birth": "10/4/2001",
+    "email": "000fryingpan000@gmail.com",
+    "id_card": "1233241423",
+    "name": "Ibrahim El Hajj",
+    "phone_number": "+96100000000",
+    "user_id": 1,
+    "user_type": "Patient"
+}
+
+
+=>GET: /users/getAll
+-does:
+Retrieves all user data, only works if the logged in user is an administrator
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if all ok:
+[
+    {
+        "address": "beirut/lebanon",
+        "condition": "likes mushrooms too much",
+        "date_of_birth": "10/4/2001",
+        "email": "000fryingpan000@gmail.com",
+        "id_card": "1233241423",
+        "name": "Ibrahim El Hajj",
+        "phone_number": "+96100000000",
+        "user_id": 1,
+        "user_type": "Patient"
+    },
+    {
+        "address": "beirut/lebanon",
+        "condition": "is an admin",
+        "date_of_birth": "10/4/2001",
+        "email": "admin@mail.com",
+        "id_card": "1233asdd241423",
+        "name": "Ibrahim El Hajjj",
+        "phone_number": "+96110000000",
+        "user_id": 2,
+        "user_type": "Admin"
+    },
+    {
+        "address": "beirut/lebanon",
+        "condition": "is a staff",
+        "date_of_birth": "10/4/2001",
+        "email": "staff@mail.com",
+        "id_card": "123gqgd241423",
+        "name": "Ibrahim El Hajjjjj",
+        "phone_number": "+96111000000",
+        "user_id": 3,
+        "user_type": "Staff"
+    }
+]
+
+
+=>GET: /users/getPatients
+-does:
+Retrieves all Patient user data, only works if the logged in user is a staff, for admin users, please refer
+to /users/getAll instead.
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if all ok:
+[
+    {
+        "address": "beirut/lebanon",
+        "condition": "likes mushrooms too much",
+        "date_of_birth": "10/4/2001",
+        "email": "000fryingpan000@gmail.com",
+        "id_card": "1233241423",
+        "name": "Ibrahim El Hajj",
+        "phone_number": "+96100000000",
+        "user_id": 1,
+        "user_type": "Patient"
+    }
+]
+
+
+=>GET: /users/downloadCertificate/<int:reservationID>
+-does:
+Retrieves user certificate, reservationID represents which certificate is being retireved,
+only works for Patient
+the reservationID can be retireved from other routes
+example call : /users/downloadCertificate/1
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if certificate does not belong to user, invalid, or unfullfilled (still a reservation, date > now):
+{'error':'Requested certificate does not exist!'},403
++if all ok:
+RETURNS A PDF FILE, LIKE THE RETURN TYPE IS ACTUALLY PDF... YES I TESTED IT AND IT WORKS
+
+
+=>GET: /reservations/getMine
+-does:
+Retrieves logged in users reservations/certificates, only works for Patient
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if all ok:
+[
+    {
+        "dose_number": 1,
+        "reservation_id": 1,
+        "reservation_state": "Fullfilled",
+        "time": 1682154000, #this value is a timestamp, no of seconds since 1970, should be easily convertable
+        "user_id": 1
+    }
+]
+#note that this is a list, it shouldn't have a size bigger than 2 though
+
+
+=>GET: /reservations/getByUser
+-does:
+Retrieves user reservations/certificates by user_ID, only works if the logged in user is a staff member
+or an administrator
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+{
+    "user_id":1
+}
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if "user_id" missing from the JSON:
+{'error':'Missing value!'},400
++if all ok:
+[
+    {
+        "dose_number": 1,
+        "reservation_id": 1,
+        "reservation_state": "Fullfilled",
+        "time": 1682154000, #this value is a timestamp, no of seconds since 1970, should be easily convertable
+        "user_id": 1
+    }
+]
+#note that this is a list, it shouldn't have a size bigger than 2 though
+
+
+=>POST: /reservations/create #Staff
+-does:
+create second user reservation and confirms dose one, only works if the logged in user is a staff member
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+{
+    "user_id":1,
+    "time":1684821600
+}
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if "user_id" or "time" missing from the JSON:
+{'error':'Missing value!'},400
++if user with user_id already has a reservation for dose2:
+{'error':'Dose already scheduled!'},400
++if time too soon:
+{'error':'Second dose need to be at least 2 weeks after first dose!'},400
++if time does not correspond to a valid time slot as described in project description:
+{'error':'Invalid Time Slot!'},400
++if all ok:
+{
+    "dose_number": 2,
+    "reservation_id": 2,
+    "reservation_state": "Waiting",
+    "time": 1684821600,
+    "user_id": 1
+}
+
+
+=>POST: /reservations/sendCertificate
+-does:
+send vaccination certificate if dose 2 is confirmed, only works if the logged in user is a staff member
+-expects:
+Bearer <token> in Authorization header (get from /aut/signin)
+{
+    "user_id":1
+}
+-returns:
++if token invalid or missing:
+{'error':'Invalid token, or user does not have access to this route!'},403
++if "user_id" or "time" missing from the JSON:
+{'error':'Missing value!'},400
++if "user_id" invalid:
+{'error':'Could not find user with user_id!'},400
++if dose 2 not booked or still waiting:
+{'error':'Dose Two is not taken!'},400
++if all ok:
+{
+    "success": "\nvaccine_name : Pfizer\npatient_name : Ibrahim El Hajj\npatient_phone_number : +96100000000\nDose Number : 2\nDate : 2023-05-23\nissued_by : AUB Covax"
+} #Note that \n will be interpreted as (new line) when printed, the output here isn't the focus, the email is
+$THIS SENDS AN EMAIL TOO

@@ -27,6 +27,8 @@ app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = GMAIL
 app.config['MAIL_PASSWORD'] = GMAIL_PASS
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 
 mail = Mail(app)
 
