@@ -76,7 +76,7 @@ def create_new_reservation():
 
     reservation_day = datetime.date.fromtimestamp(time)
     
-    if reservation_day < datetime.date.fromtimestamp(reservations[0].time)+datetime.timedelta(days=14):
+    if reservation_day < datetime.date.fromtimestamp(reservations[0].time)+datetime.timedelta(days=13):
         return {'error':'Second dose need to be at least 2 weeks after first dose!'},400
     
     first_slot_that_day = datetime.datetime(reservation_day.year,reservation_day.month,reservation_day.day,hour=8)
@@ -111,16 +111,19 @@ def send_certificate():
     if ("user_id" not in body):
         return {'error':'Missing value!'},400
     
-    user=User.query.filter(User.user_id==body["user_id"]).all()
-    sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"]).offset(1).limit(1).first()
+    user=User.query.filter(User.user_id==body["user_id"]).first()
+    sencond_reservation= Reservation.query.filter(Reservation.user_id==body["user_id"],
+                                                  Reservation.dose_number==2).first()
 
-    if sencond_reservation.dose_number==2 and sencond_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
+    if sencond_reservation is None or sencond_reservation.reservation_state==getStringFromState(ReservationState.Waiting):
         return {'error':'Dose Two is not taken!'},400
     else:
         certificate = {
         'vaccine_name': "Pfizer",
         'patient_name': user.name,
         'patient_phone_number': user.phone_number,
+        'Dose Number:':str(sencond_reservation.dose_number),
+        'Date:':str(datetime.date.fromtimestamp(sencond_reservation.time)),
         'issued_by': 'AUB Covax'}
 
         send_email("Vaccination Certificate",user.email,"Dear,"+ {user.name}+"This an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+{certificate})

@@ -24,5 +24,5 @@ exit()
 3.Run the backend:
 
 ```
-flask run
+flask run -h 0.0.0.0
 ```

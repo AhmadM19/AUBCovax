@@ -47,7 +47,8 @@ def getSoonestFreeTimeSlot() -> int:
                 reservation_iterator+=1#next reservation
             today +=datetime.timedelta(days=1)#next day
 
+from config import GMAIL
 def send_email(subject,receipents,body):
-    msg = Message(subject, sender='abcovax@gmail.com', recipients=receipents)
+    msg = Message(subject, sender=GMAIL, recipients=receipents)
     msg.body = body
     mail.send(msg)

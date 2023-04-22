@@ -87,7 +87,7 @@ class UserSchema(ma.Schema):
     """Marshmallow schema to dump User data
     """
     class Meta:
-        fields = ("name","date_of_birth", "id_card","phone_number","email","address","condition","user_type")
+        fields = ("user_id","name","date_of_birth", "id_card","phone_number","email","address","condition","user_type")
         model = User
 
 user_schema = UserSchema()

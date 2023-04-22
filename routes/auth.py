@@ -54,7 +54,7 @@ def create_user():
             db.session.commit()
         return {'error':'User already exists, or failed to reserve!'},403
     
-    send_email("Vaccination Process",new_user.email,"Dear,"+ {new_user.name}+"This an automatic email from AUBCOvaxto confirm your appointment for dose One")
+    send_email("Vaccination Process",new_user.email,"Dear,"+ {new_user.name}+"This an automatic email from AUBCovax to confirm your appointment for dose One")
 
     return {
         "user":user_schema.dump(new_user),

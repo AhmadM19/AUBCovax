@@ -54,7 +54,7 @@ class ReservationSchema(ma.Schema):
     """Marshmallow schema to dump Reservation data
     """
     class Meta:
-        fields = ("time","user_id","dose_number","reservation_state")
+        fields = ("reservation_id","time","user_id","dose_number","reservation_state")
         model = Reservation
 
 reservation_schema = ReservationSchema()

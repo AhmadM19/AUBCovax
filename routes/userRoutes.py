@@ -1,10 +1,14 @@
 from flask import Blueprint,request,jsonify,Response
 
 from controle.authHelpers import authenticateAs
+from controle.reservationHelpers import updateAllOutDatedStates
 from models.User import User,user_schema,user_schema_many,UserType,getStringFromType
+from models.Reservation import Reservation,getStringFromState,ReservationState
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+
+import datetime
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -54,22 +58,33 @@ def retrieve_all_patient_data():
     
     return jsonify(user_schema_many.dump(users))
 
-@users_bp.route('/downloadCertificate', methods=["GET"])
-def retrieve_user_certificate():
-    """Retrieves user certificate
+@users_bp.route('/downloadCertificate/<int:requestID>', methods=["GET"])
+def retrieve_user_certificate(requestID):
+    """Retrieves user certificate, requestID represents which certificate is being retireved
 
     Returns:
         Http response
     """
+    updateAllOutDatedStates()
     user:User = authenticateAs(request,UserType.Patient)
     if user is None:#Neither patient nor staff nor admin
         return {'error':'Invalid token, or user does not have access to this route!'},403
     
+    certificate :Reservation = Reservation.query.filter(Reservation.user_id==user.user_id,
+                                                        Reservation.reservation_id==requestID,
+                                                        Reservation.reservation_state==getStringFromState(ReservationState.Fullfilled)
+                                                        ).first()
+
+    if certificate is None:
+        return {'error':'Requested certificate does not exist!'},403
+
     # Create a list of data for the vaccine certificate
     certificate_data = [
         ['Vaccine Name:', "Pfizer"],
+        ['Dose Number:',str(certificate.dose_number)]
         ['Patient Name:', user.name],
         ['Issued By:', 'AUB Covax'],
+        ['Date:',str(datetime.date.fromtimestamp(certificate.time))]
     ]
 
     # Create a PDF document
