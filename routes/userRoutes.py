@@ -81,7 +81,7 @@ def retrieve_user_certificate(requestID):
     # Create a list of data for the vaccine certificate
     certificate_data = [
         ['Vaccine Name:', "Pfizer"],
-        ['Dose Number:',str(certificate.dose_number)]
+        ['Dose Number:',str(certificate.dose_number)],
         ['Patient Name:', user.name],
         ['Issued By:', 'AUB Covax'],
         ['Date:',str(datetime.date.fromtimestamp(certificate.time))]
