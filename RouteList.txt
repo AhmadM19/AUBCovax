@@ -270,6 +270,8 @@ Bearer <token> in Authorization header (get from /aut/signin)
 {'error':'Invalid token, or user does not have access to this route!'},403
 +if "user_id" or "time" missing from the JSON:
 {'error':'Missing value!'},400
++if "user_id" does not refer to a valid user:
+{'error':'User can not be found!'},400
 +if user with user_id already has a reservation for dose2:
 {'error':'Dose already scheduled!'},400
 +if time too soon:
@@ -284,6 +286,7 @@ Bearer <token> in Authorization header (get from /aut/signin)
     "time": 1684821600,
     "user_id": 1
 }
+$THIS SENDS AN EMAIL TOO
 
 
 =>POST: /reservations/sendCertificate

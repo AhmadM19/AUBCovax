@@ -70,6 +70,10 @@ def create_new_reservation():
     user_id = body["user_id"]
     time = body["time"]
 
+    user = User.query.filter(User.user_id==user_id).first()
+    if user is None:
+        return {'error':'User can not be found!'},400
+
     reservations:list[Reservation] = Reservation.query.filter(Reservation.user_id==user_id).all()
     if len(reservations)>1:
         return {'error':'Dose already scheduled!'},400
@@ -91,6 +95,11 @@ def create_new_reservation():
     second_reservation.dose_number = 2
     db.session.add(second_reservation)
     db.session.commit()
+    try:
+        send_email("Second Dose Notification",user.email,"Dear,"+ user.name+" This is an automatic email from AUBCovax to notify you that you're second vaccination dose has been scheduled.")
+    except:
+        print("MAIL NOT SENT!!!!!!")
+
     return reservation_schema.dump(second_reservation)
 
 @reservations_bp.route('/sendCertificate', methods=["POST"])
@@ -119,15 +128,15 @@ def send_certificate():
         return {'error':'Dose Two is not taken!'},400
     
     certificate = "\n"+\
-    "vaccine_name : Pfizer\n"+\
-    "patient_name : "+ user.name+"\n"+\
-    "patient_phone_number : "+ user.phone_number+"\n"+\
+    "vaccine name : Pfizer\n"+\
+    "patient name : "+ user.name+"\n"+\
+    "patient phone number : "+ user.phone_number+"\n"+\
     "Dose Number : "+str(sencond_reservation.dose_number)+"\n"+\
     "Date : "+str(datetime.date.fromtimestamp(sencond_reservation.time))+"\n"+\
-    "issued_by : AUB Covax"
+    "issued by : AUB Covax"
 
     try:
-        send_email("Vaccination Certificate",user.email,"Dear,"+ user.name+"This an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+certificate)
+        send_email("Vaccination Certificate",user.email,"Dear,"+ user.name+" This is an automatic email from AUBCovax to verify that you have taken second dose of vaccine"+certificate)
     except:
         print("MAIL NOT SENT!!!!!!")
         
