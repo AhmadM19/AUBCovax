@@ -229,7 +229,7 @@ Bearer <token> in Authorization header (get from /aut/signin)
 #note that this is a list, it shouldn't have a size bigger than 2 though
 
 
-=>GET: /reservations/getByUser
+=>POST: /reservations/getByUser
 -does:
 Retrieves user reservations/certificates by user_ID, only works if the logged in user is a staff member
 or an administrator

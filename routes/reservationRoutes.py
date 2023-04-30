@@ -26,7 +26,7 @@ def retrieve_current_user_reservations():
     
     return jsonify(reservation_schema_many.dump(reservations))
 
-@reservations_bp.route('/getByUser', methods=["GET"])
+@reservations_bp.route('/getByUser', methods=["POST"])
 def retrieve_reservations_by_id():
     """Retrieves user reservations/certificates by ID, only works if the logged in user is a staff member
     or an administrator
